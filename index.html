@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(ellipse at center, #001a1a 0%, #000a0f 50%, #000508 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: #0ff;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #ui {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #ui span {
+            opacity: 0.9;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        #staminaContainer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            opacity: 0.9;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        #staminaBarBg {
+            width: 150px;
+            height: 12px;
+            background: rgba(0, 20, 30, 0.8);
+            border: 2px solid #0ff;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 0 10px #0ff;
+        }
+
+        #staminaBar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #0ff, #0f0);
+            transition: width 0.1s;
+            box-shadow: 0 0 10px #0ff;
+        }
+
+        #canvas {
+            border: 3px solid #0ff;
+            box-shadow: 0 0 30px #0ff, 0 0 60px rgba(0, 255, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        #controls {
+            font-size: 12px;
+            opacity: 0.7;
+            text-align: center;
+            line-height: 1.8;
+            text-shadow: 0 0 5px #0ff;
+        }
+
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            text-align: center;
+            pointer-events: none;
+            text-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+            z-index: 10;
+        }
+
+        #startScreen, #deathScreen, #winScreen, #pauseScreen, #gameOverScreen, #tutorialCompleteScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #001a1a 0%, #000a0f 50%, #000508 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            z-index: 20;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Neon başlık stili */
+        h1 {
+            font-size: 56px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            color: #fff;
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 20px #0ff,
+                0 0 40px #0ff,
+                0 0 80px #0ff,
+                0 0 120px #088;
+            animation: neonPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes neonPulse {
+            0%, 100% { 
+                text-shadow: 
+                    0 0 5px #fff,
+                    0 0 10px #fff,
+                    0 0 20px #0ff,
+                    0 0 40px #0ff,
+                    0 0 80px #0ff,
+                    0 0 120px #088;
+            }
+            50% { 
+                text-shadow: 
+                    0 0 2px #fff,
+                    0 0 5px #fff,
+                    0 0 10px #0ff,
+                    0 0 20px #0ff,
+                    0 0 40px #0ff,
+                    0 0 60px #088;
+            }
+        }
+
+        h2 {
+            font-size: 36px;
+            text-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.8;
+            letter-spacing: 6px;
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+            animation: subtitleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes subtitleGlow {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        button {
+            background: transparent;
+            border: 2px solid #0ff;
+            color: #fff;
+            padding: 15px 50px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            transition: all 0.3s;
+            margin-top: 20px;
+            border-radius: 30px;
+            text-shadow: 0 0 10px #0ff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        button:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 40px #0ff, 0 0 60px #0ff;
+            transform: scale(1.05);
+        }
+
+        .inventory {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .inv-item {
+            padding: 5px 10px;
+            border: 1px solid #0ff;
+            opacity: 0.8;
+            border-radius: 4px;
+        }
+
+        /* Neon çerçeve efekti */
+        .neon-frame {
+            position: relative;
+            padding: 50px 70px;
+            border: 3px solid #0ff;
+            border-radius: 20px;
+            box-shadow: 
+                0 0 20px #0ff,
+                0 0 40px rgba(0, 255, 255, 0.5),
+                inset 0 0 30px rgba(0, 255, 255, 0.1);
+            background: rgba(0, 20, 30, 0.6);
+            margin-bottom: 20px;
+        }
+
+        .neon-frame::before,
+        .neon-frame::after {
+            content: '◆';
+            position: absolute;
+            font-size: 24px;
+            color: #0ff;
+            text-shadow: 0 0 15px #0ff;
+            animation: crystalFloat 3s ease-in-out infinite;
+        }
+
+        .neon-frame::before {
+            top: 50%;
+            left: -40px;
+            transform: translateY(-50%);
+        }
+
+        .neon-frame::after {
+            top: 50%;
+            right: -40px;
+            transform: translateY(-50%);
+            animation-delay: 1.5s;
+        }
+
+        @keyframes crystalFloat {
+            0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.7; }
+            50% { transform: translateY(-60%) scale(1.2); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="ui">
+            <span>❤️ <strong id="livesCount">3</strong></span>
+            <span>Level: <strong id="levelNum">1</strong></span>
+            <span>⏱️ <strong id="gameTimer">0:00</strong></span>
+            <span id="pingStatus">Ping: <strong id="pingReady">HAZIR</strong></span>
+            <span>💣 <strong id="bombCount">0</strong></span>
+            <span><canvas id="netIconUI" width="20" height="16" style="vertical-align: middle;"></canvas> <strong id="trapCount">0</strong></span>
+            <span>🤖 <strong id="listenerCount">0</strong></span>
+            <span>👾 <strong id="hunterCount">0</strong></span>
+        </div>
+        <div id="staminaContainer">
+            <span>⚡ Enerji:</span>
+            <div id="staminaBarBg">
+                <div id="staminaBar"></div>
+            </div>
+        </div>
+        <canvas id="canvas" width="800" height="600"></canvas>
+        <div id="controls">
+            ←↑↓→: Hareket | SPACE: Ping | E: 💣 | Q: <canvas id="netIconControls" width="18" height="14" style="vertical-align: middle;"></canvas> | W: Gizlenme | ESC: Duraklat | N: Ses Aç/Kapa
+        </div>
+
+        <div id="startScreen">
+            <div class="neon-frame">
+                <h1>ECHO SCANNER</h1>
+                <p class="subtitle">Karanlıkta sesle yolunu bul</p>
+            </div>
+            <div id="controls" style="margin-top: 20px; max-width: 350px;">
+                ←↑↓→: Hareket<br>
+                SPACE: Ses dalgası gönder<br>
+                E: 💣 Ses bombası at<br>
+                Q: <canvas id="netIconStart" width="24" height="20" style="vertical-align: middle; margin: 0 2px;"></canvas> Ağ bırak<br>
+                W: Gizlenme (görünmez ol)<br><br>
+                <span style="color: #c0b0ff;">🤖 Dinleyici</span> - Sesi takip eder<br>
+                <span style="color: #f0f;">👾 Avcı</span> - Duvardan geçer
+            </div>
+            <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <button onclick="startTutorial()" style="border-color: #0f0; color: #0f0;">📚 EĞİTİM</button>
+                <button onclick="startGame()">🎮 OYNA</button>
+            </div>
+        </div>
+
+        <div id="deathScreen" class="hidden">
+            <h2 style="color: #f00; text-shadow: 0 0 20px #f00;">YAKALANDIN!</h2>
+            <p class="subtitle">Canavar seni buldu...</p>
+            <p style="font-size: 18px; margin-top: 10px;">Kalan Can: <span id="remainingLives" style="color: #f00;">2</span></p>
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <button onclick="continueAfterDeath()">DEVAM ET</button>
+                <button onclick="restartGame()" style="border-color: #888; color: #888;">BAŞTAN BAŞLA</button>
+            </div>
+        </div>
+
+        <div id="gameOverScreen" class="hidden">
+            <style>
+                @keyframes redNeonPulse {
+                    0%, 100% { 
+                        text-shadow: 
+                            0 0 5px #f00,
+                            0 0 10px #f00,
+                            0 0 20px #f00,
+                            0 0 40px #f00,
+                            0 0 80px #800;
+                    }
+                    50% { 
+                        text-shadow: 
+                            0 0 2px #f00,
+                            0 0 5px #f00,
+                            0 0 10px #f00,
+                            0 0 20px #f00,
+                            0 0 40px #800;
+                    }
+                }
+                @keyframes redCrystalFloat {
+                    0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.7; }
+                    50% { transform: translateY(-60%) scale(1.2); opacity: 1; }
+                }
+                #gameOverScreen .neon-frame::before,
+                #gameOverScreen .neon-frame::after {
+                    color: #f00 !important;
+                    text-shadow: 0 0 15px #f00 !important;
+                }
+            </style>
+            <div class="neon-frame" style="border-color: #f00; box-shadow: 0 0 20px #f00, 0 0 40px rgba(255,0,0,0.5), inset 0 0 30px rgba(255,0,0,0.1);">
+                <h1 style="color: #f00; animation: redNeonPulse 2s ease-in-out infinite;">GAME OVER</h1>
+                <p class="subtitle" style="color: #f66;">Tüm canlarını kaybettin...</p>
+            </div>
+            <p style="font-size: 18px; margin-top: 20px; color: #aaa; font-weight: bold;">Ulaşılan Level: <span id="reachedLevel" style="color: #fff; font-size: 24px; font-weight: bold;">1</span> / 15</p>
+            <button onclick="restartGame()" style="margin-top: 30px; border-color: #f80; color: #f80; box-shadow: 0 0 20px rgba(255,136,0,0.5), 0 0 40px rgba(255,136,0,0.3); text-shadow: 0 0 10px #f80;">BAŞTAN BAŞLA</button>
+        </div>
+
+        <div id="winScreen" class="hidden">
+            <h2 style="color: #0f0; text-shadow: 0 0 20px #0f0;">TEBRİKLER!</h2>
+            <p class="subtitle">Tüm levelları geçtin!</p>
+            <p style="font-size: 14px; opacity: 0.7; margin-top: 10px;">Süre: <span id="finalTime">0:00</span></p>
+            <button onclick="restartGame()">TEKRAR OYNA</button>
+        </div>
+
+        <div id="pauseScreen" class="hidden">
+            <h2>DURAKLADI</h2>
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                <button onclick="resumeGame()">DEVAM ET</button>
+                <button onclick="restartLevel()" style="border-color: #ff0; color: #ff0;">LEVELİ YENİDEN BAŞLAT</button>
+                <button onclick="restartGame()" style="border-color: #888; color: #888;">ANA MENÜ</button>
+            </div>
+        </div>
+
+        <div id="tutorialCompleteScreen" class="hidden">
+            <div class="neon-frame" style="border-color: #0f0; box-shadow: 0 0 20px #0f0, 0 0 40px rgba(0,255,0,0.5), inset 0 0 30px rgba(0,255,0,0.1);">
+                <h2 style="color: #0f0; text-shadow: 0 0 20px #0f0;">🎉 EĞİTİM TAMAM!</h2>
+                <p class="subtitle" style="color: #8f8;">Artık hazırsın!</p>
+            </div>
+            <div style="margin-top: 20px; text-align: center; opacity: 0.8;">
+                <p>📡 SPACE - Ping at</p>
+                <p>💣 E - Bomba bırak</p>
+                <p><canvas id="netIconTutorial" width="24" height="20" style="vertical-align: middle; margin: 0 2px;"></canvas> Q - Ağ bırak</p>
+                <p>👻 W - Gizlen</p>
+            </div>
+            <button onclick="startGameAfterTutorial()" style="margin-top: 30px; border-color: #0f0; color: #0f0;">🎮 OYUNA BAŞLA</button>
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Ağ ikonu çizim fonksiyonu
+        function drawNetIcon(canvasId) {
+            const netCanvas = document.getElementById(canvasId);
+            if (!netCanvas) return;
+            const netCtx = netCanvas.getContext('2d');
+            const w = netCanvas.width, h = netCanvas.height;
+            
+            netCtx.clearRect(0, 0, w, h);
+            netCtx.strokeStyle = 'rgba(200, 200, 200, 0.9)';
+            netCtx.lineWidth = 1;
+            
+            const netW = 18, netH = 14;
+            const cols = 4, rows = 3;
+            const cellW = netW / cols, cellH = netH / rows;
+            const startX = (w - netW) / 2, startY = (h - netH) / 2;
+            
+            // Yatay çizgiler
+            for (let r = 0; r <= rows; r++) {
+                netCtx.beginPath();
+                const y = startY + r * cellH;
+                const curve = (r === 0 || r === rows) ? 0 : Math.sin(r / rows * Math.PI) * 1.5;
+                netCtx.moveTo(startX - 2, y);
+                netCtx.quadraticCurveTo(w/2, y + curve, startX + netW + 2, y);
+                netCtx.stroke();
+            }
+            
+            // Dikey çizgiler
+            for (let c = 0; c <= cols; c++) {
+                netCtx.beginPath();
+                const x = startX + c * cellW;
+                const curve = (c === 0 || c === cols) ? 0 : Math.sin(c / cols * Math.PI) * 1.5;
+                netCtx.moveTo(x, startY - 1);
+                netCtx.quadraticCurveTo(x + curve, h/2, x, startY + netH + 1);
+                netCtx.stroke();
+            }
+            
+            // Kırmızı köşe topları
+            netCtx.fillStyle = '#dc3545';
+            const corners = [
+                {x: startX - 2, y: startY - 1},
+                {x: startX + netW + 2, y: startY - 1},
+                {x: startX - 2, y: startY + netH + 1},
+                {x: startX + netW + 2, y: startY + netH + 1}
+            ];
+            corners.forEach(c => {
+                netCtx.beginPath();
+                netCtx.arc(c.x, c.y, 2.5, 0, Math.PI * 2);
+                netCtx.fill();
+            });
+        }
+        
+        // Sayfa yüklenince ağ ikonlarını çiz
+        window.addEventListener('load', () => {
+            drawNetIcon('netIconStart');
+            drawNetIcon('netIconTutorial');
+            drawNetIcon('netIconUI');
+            drawNetIcon('netIconControls');
+        });
+
+        // Ses sistemi
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        let soundEnabled = true;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+        
+        function playSound(type) {
+            if (!soundEnabled || !audioCtx) return;
+            
+            const now = audioCtx.currentTime;
+            
+            // Ping için özel echo efekti
+            if (type === 'ping') {
+                // Ana ping + 3 yankı
+                const echoes = [
+                    { delay: 0, gain: 0.3, freq: 800 },
+                    { delay: 0.12, gain: 0.15, freq: 600 },
+                    { delay: 0.25, gain: 0.08, freq: 500 },
+                    { delay: 0.4, gain: 0.04, freq: 400 }
+                ];
+                
+                echoes.forEach(echo => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(echo.freq, now + echo.delay);
+                    osc.frequency.exponentialRampToValueAtTime(echo.freq * 0.5, now + echo.delay + 0.15);
+                    
+                    gain.gain.setValueAtTime(echo.gain, now + echo.delay);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + echo.delay + 0.2);
+                    
+                    osc.start(now + echo.delay);
+                    osc.stop(now + echo.delay + 0.25);
+                });
+                return;
+            }
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            switch(type) {
+                case 'bomb':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(150, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(30, now + 0.3);
+                    gainNode.gain.setValueAtTime(0.4, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.4);
+                    break;
+                    
+                case 'trap':
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(800, now);
+                    oscillator.frequency.setValueAtTime(200, now + 0.05);
+                    oscillator.frequency.setValueAtTime(600, now + 0.1);
+                    oscillator.frequency.setValueAtTime(100, now + 0.15);
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.25);
+                    break;
+                    
+                case 'kill':
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(600, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.3);
+                    break;
+                    
+                case 'death':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(400, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.6);
+                    break;
+                    
+                case 'pickup':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(500, now);
+                    oscillator.frequency.setValueAtTime(700, now + 0.1);
+                    oscillator.frequency.setValueAtTime(900, now + 0.15);
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.2);
+                    break;
+                    
+                case 'levelup':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(400, now);
+                    oscillator.frequency.setValueAtTime(500, now + 0.1);
+                    oscillator.frequency.setValueAtTime(600, now + 0.2);
+                    oscillator.frequency.setValueAtTime(800, now + 0.3);
+                    gainNode.gain.setValueAtTime(0.25, now);
+                    gainNode.gain.setValueAtTime(0.25, now + 0.35);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.5);
+                    break;
+                    
+                case 'alert':
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(300, now);
+                    oscillator.frequency.setValueAtTime(400, now + 0.1);
+                    gainNode.gain.setValueAtTime(0.15, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.2);
+                    break;
+                    
+                case 'chase':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(200, now);
+                    oscillator.frequency.setValueAtTime(300, now + 0.1);
+                    oscillator.frequency.setValueAtTime(200, now + 0.2);
+                    gainNode.gain.setValueAtTime(0.15, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.3);
+                    break;
+                    
+                case 'step':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(100, now);
+                    gainNode.gain.setValueAtTime(0.05, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.05);
+                    break;
+            }
+        }
+        
+        // Oyun durumu
+        let gameState = 'start';
+        let currentLevel = 0;
+        let player = { x: 0, y: 0, size: 12 };
+        let exit = { x: 0, y: 0, size: 20 };
+        let enemies = [];
+        let pings = [];
+        let bombs = [];
+        let traps = [];
+        let collectibles = [];
+        let revealedWalls = [];
+        let inventory = { bombs: 0, traps: 0 };
+        let keys = {};
+        let pingCooldown = 0;
+        let basePingCooldown = 120;
+        let isSneaking = false;
+        let maxBombs = 2;
+        let maxTraps = 1;
+        let bombRadius = 60;
+        let lives = 5;
+        const maxLives = 5;
+        let stamina = 100;
+        const maxStamina = 100;
+        const staminaDrain = 0.5;
+        const staminaRegen = 0.2;
+        let messageTimer = 0;
+        let messageText = '';
+        let gameTime = 0;
+        let isPaused = false;
+        let isTutorial = false;
+        let tutorialStep = 0;
+
+        // Basit tutorial levelleri - sadece mesaj ve harita
+        const tutorialLevels = [
+            // Tutorial 1: Ping + Hareket
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,1,0,0,1,1,0,1],
+                    [1,0,1,0,1,0,0,0,0,0,1],
+                    [1,0,1,0,0,0,0,1,0,0,1],
+                    [1,0,0,0,0,0,0,1,3,0,1],
+                    [1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "SPACE = Ping at, Ok tuslari = Hareket, Yesil kapiya git!"
+            },
+            // Tutorial 2: Robot
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,4,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,3,0,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "ROBOT! Ping sesini duyar ve sana gelir. Dikkat!"
+            },
+            // Tutorial 3: Bomba
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,5,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,4,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,3,0,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "Bombayı al (üstüne git), E ile bırak. Robot yok olur!"
+            },
+            // Tutorial 4: Kapan
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,6,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,4,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,0,3,0,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "Ağı al, Q ile bırak. Canavar donar!"
+            },
+            // Tutorial 5: Gizlenme
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,4,0,4,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,3,0,0,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "W tuşunu BASILI TUT = Gizlen! Robotlar seni göremez!"
+            },
+            // Tutorial 6: Avci
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,7,0,0,1],
+                    [1,0,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,3,0,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "AVCI! Duvarlardan gecebilir! Cok tehlikeli!"
+            }
+        ];
+
+        // Level tanımları
+        const levels = [
+            // Level 1
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,5,1,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,0,1,0,1,1,1,1,1,1,1,0,1],
+                    [1,0,1,0,0,0,0,0,0,0,0,0,1,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,1,0,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,0,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "SPACE ile ping at! 💣 Bomba al (E ile kullan)"
+            },
+            // Level 2
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
+                    [1,1,1,1,0,1,0,1,1,1,0,1,0,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1],
+                    [1,0,1,1,1,1,1,1,0,1,1,1,1,0,1,0,1],
+                    [1,0,0,0,0,0,0,1,0,0,0,4,1,0,0,0,1],
+                    [1,1,1,1,1,1,0,1,1,1,1,0,1,1,1,0,1],
+                    [1,0,0,0,5,0,0,0,0,5,0,0,0,0,1,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "🤖 ROBOT! Ping sesini duyar... 💣💣 Bomba var!"
+            },
+            // Level 3
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
+                    [1,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1],
+                    [1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,4,1,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,1],
+                    [1,0,5,0,0,0,0,0,6,0,0,0,0,0,5,0,0,0,1],
+                    [1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,1,0,0,0,4,0,0,0,0,5,1,0,1],
+                    [1,0,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "2 🦇 Dinleyici! 💣💣💣 Bol bomba var!"
+            },
+            // Level 4
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1],
+                    [1,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,0,0,1],
+                    [1,0,5,0,0,0,0,1,4,1,0,0,0,0,0,1,0,0,5,0,1],
+                    [1,0,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
+                    [1,0,0,0,0,5,0,0,0,0,0,0,0,1,0,0,0,4,1,0,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,0,1],
+                    [1,0,0,6,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,1],
+                    [1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "👾 AVCI geldi! 💣💣💣💣 Bomba kullan!"
+            },
+            // Level 5
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,0,1],
+                    [1,0,1,0,0,0,0,0,0,0,0,4,0,1,0,0,0,0,0,0,1,0,1],
+                    [1,0,1,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1],
+                    [1,0,0,5,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,5,0,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,6,0,0,0,0,0,0,7,0,0,0,0,0,6,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "Labirent büyüdü! 2 🦇 + 1 👾"
+            },
+            // Level 6
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
+                    [1,0,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1],
+                    [1,0,0,1,0,1,0,0,0,1,0,0,0,1,0,0,1],
+                    [1,0,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1],
+                    [1,0,0,0,0,0,0,4,0,0,0,0,0,1,0,0,1],
+                    [1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,5,0,0,0,0,0,5,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,4,0,0,0,0,0,4,0,0,0,0,1],
+                    [1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1],
+                    [1,6,0,0,0,0,0,6,0,0,0,0,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "Dar koridorlar! 3 🦇 Dinleyici"
+            },
+            // Level 7
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,1],
+                    [1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1],
+                    [1,0,0,6,0,0,0,0,0,0,0,0,0,0,0,6,0,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "⚠️ 3 👾 AVCI! Hepsi duvardan geçer!"
+            },
+            // Level 8
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+                    [1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,0,1],
+                    [1,0,5,0,0,0,0,0,4,0,0,0,0,0,0,0,7,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1],
+                    [1,0,1,0,0,6,0,0,0,4,0,0,0,6,0,0,0,0,1,0,1],
+                    [1,0,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,7,0,0,0,0,0,7,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,5,0,0,0,0,0,4,0,0,0,0,0,5,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "3 🦇 + 3 👾! Dikkatli ol!"
+            },
+            // Level 9
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1],
+                    [1,0,1,0,0,0,0,4,1,0,0,0,0,7,0,0,0,0,1,0,0,0,1],
+                    [1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,0,1,1,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,0,1,0,0,0,1],
+                    [1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1],
+                    [1,5,0,0,0,6,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1],
+                    [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,7,0,0,0,0,1,0,1],
+                    [1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,7,0,1,0,0,0,0,0,6,0,0,0,0,4,0,0,0,0,1],
+                    [1,1,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,1,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "4 🦇 + 3 👾! ❤️ Can var!"
+            },
+            // Level 10
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+                    [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
+                    [1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1],
+                    [1,0,1,0,1,0,0,0,0,7,0,0,0,0,1,0,1,0,1],
+                    [1,0,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,0,1],
+                    [1,0,1,0,1,0,1,5,0,4,0,6,1,0,1,0,1,0,1],
+                    [1,0,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1],
+                    [1,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,1],
+                    [1,0,1,0,1,1,1,1,1,4,1,1,1,1,1,0,1,0,1],
+                    [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
+                    [1,0,1,1,1,1,1,1,1,7,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "Spiral labirent! 2 🦇 + 2 👾"
+            },
+            // Level 11
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+                    [1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1],
+                    [1,0,0,0,1,0,0,0,0,4,0,0,0,0,0,0,1,7,0,0,1],
+                    [1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1],
+                    [1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,1],
+                    [1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1],
+                    [1,0,0,0,0,0,1,6,0,0,0,4,1,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,7,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,1],
+                    [1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,6,0,0,0,4,0,0,0,0,0,0,6,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "Çapraz geçitler! 3 🦇 + 3 👾"
+            },
+            // Level 12
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
+                    [1,0,0,0,0,1,0,4,0,0,0,1,0,0,7,0,0,1,0,0,0,0,1],
+                    [1,0,0,5,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,6,0,0,1],
+                    [1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1],
+                    [1,0,0,0,0,0,0,0,7,0,0,0,0,0,4,0,0,0,0,0,0,0,1],
+                    [1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
+                    [1,0,0,6,0,1,0,0,4,0,0,1,0,0,0,0,0,1,0,5,0,0,1],
+                    [1,0,0,0,0,1,0,0,0,0,0,1,0,7,0,0,0,1,0,0,0,0,1],
+                    [1,1,1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "Odalar ve koridorlar! ❤️ Can var!"
+            },
+            // Level 13
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,7,0,0,0,0,0,0,0,0,7,0,0,0,0,1],
+                    [1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1],
+                    [1,0,1,0,0,5,0,0,0,0,0,0,0,5,0,0,1,0,1],
+                    [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,7,0,0,0,0,0,0,0,7,0,0,0,0,1],
+                    [1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1],
+                    [1,0,0,0,0,6,0,0,0,0,0,0,0,6,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "⚠️ 5 👾 AVCI! Duvarlar seni koruyamaz!"
+            },
+            // Level 14
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+                    [1,0,1,0,1,0,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,0,1],
+                    [1,0,1,0,0,0,0,4,0,0,0,0,0,0,7,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,5,0,0,0,0,0,0,0,4,0,0,0,0,0,0,5,0,0,0,1],
+                    [1,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1],
+                    [1,0,0,0,0,0,0,0,7,0,0,8,0,7,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1],
+                    [1,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,1],
+                    [1,0,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,0,1],
+                    [1,0,1,0,0,6,0,0,7,0,0,0,7,0,0,6,0,0,0,0,1,0,1],
+                    [1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "4 🦇 + 5 👾! ❤️ Son can!"
+            },
+            // Level 15 - ULTIMATE FINAL
+            {
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1],
+                    [1,0,0,0,4,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,4,0,0,0,1],
+                    [1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1],
+                    [1,0,1,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,1,0,1],
+                    [1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,7,0,0,0,7,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1],
+                    [1,0,1,0,0,6,0,4,0,0,0,0,0,0,0,0,0,4,0,6,0,0,1,0,1],
+                    [1,0,1,1,1,1,0,1,1,1,1,0,1,0,1,1,1,1,0,1,1,1,1,0,1],
+                    [1,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,1],
+                    [1,0,1,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1,0,1],
+                    [1,0,1,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,1,0,1],
+                    [1,0,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,7,0,0,0,0,0,0,3,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+                ],
+                message: "🏆 ULTIMATE FİNAL! 6 🦇 + 6 👾! SON BOSS!"
+            }
+        ];
+
+        const TILE_SIZE = 40;
+
+        function hasLineOfSight(x1, y1, x2, y2) {
+            const dist = Math.hypot(x2 - x1, y2 - y1);
+            const steps = Math.ceil(dist / 10);
+            
+            for (let i = 1; i < steps; i++) {
+                const t = i / steps;
+                const checkX = x1 + (x2 - x1) * t;
+                const checkY = y1 + (y2 - y1) * t;
+                
+                if (isWall(checkX, checkY)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function loadLevel(levelIndex) {
+            const level = levels[levelIndex];
+            const map = level.map;
+            
+            enemies = [];
+            collectibles = [];
+            pings = [];
+            bombs = [];
+            traps = [];
+            revealedWalls = [];
+            stamina = maxStamina;
+            pingCooldown = 0;
+            
+            if (levelIndex >= 6) {
+                basePingCooldown = 90;
+            } else if (levelIndex >= 2) {
+                basePingCooldown = 105;
+            } else {
+                basePingCooldown = 120;
+            }
+            
+            if (levelIndex >= 5) {
+                bombRadius = 100;
+            } else if (levelIndex >= 2) {
+                bombRadius = 80;
+            } else {
+                bombRadius = 60;
+            }
+            
+            // Daha fazla bomba ver
+            if (levelIndex >= 5) {
+                maxBombs = 6;
+                maxTraps = 4;
+            } else if (levelIndex >= 2) {
+                maxBombs = 5;
+                maxTraps = 3;
+            } else {
+                maxBombs = 4;
+                maxTraps = 2;
+            }
+            
+            for (let y = 0; y < map.length; y++) {
+                for (let x = 0; x < map[y].length; x++) {
+                    const tile = map[y][x];
+                    const posX = x * TILE_SIZE + TILE_SIZE / 2;
+                    const posY = y * TILE_SIZE + TILE_SIZE / 2;
+                    
+                    if (tile === 2) {
+                        player.x = posX;
+                        player.y = posY;
+                    } else if (tile === 3) {
+                        exit.x = posX;
+                        exit.y = posY;
+                    } else if (tile === 4) {
+                        enemies.push({
+                            x: posX,
+                            y: posY,
+                            size: 14,
+                            type: 'listener',
+                            state: 'idle',
+                            targetX: posX,
+                            targetY: posY,
+                            alertTimer: 0,
+                            stunned: 0
+                        });
+                    } else if (tile === 7) {
+                        enemies.push({
+                            x: posX,
+                            y: posY,
+                            size: 16,
+                            type: 'hunter',
+                            state: 'patrol',
+                            targetX: posX,
+                            targetY: posY,
+                            alertTimer: 0,
+                            stunned: 0,
+                            patrolTarget: null
+                        });
+                    } else if (tile === 5) {
+                        collectibles.push({ x: posX, y: posY, type: 'bomb' });
+                    } else if (tile === 6) {
+                        collectibles.push({ x: posX, y: posY, type: 'trap' });
+                    } else if (tile === 8) {
+                        collectibles.push({ x: posX, y: posY, type: 'heart' });
+                    }
+                }
+            }
+            
+            canvas.width = map[0].length * TILE_SIZE;
+            canvas.height = map.length * TILE_SIZE;
+            
+            showMessage(level.message, 3000);
+        }
+
+        function showMessage(text, duration) {
+            messageText = text;
+            messageTimer = duration;
+            document.getElementById('message').textContent = text;
+            document.getElementById('message').style.opacity = 1;
+        }
+
+        function startTutorial() {
+            initAudio();
+            document.getElementById('startScreen').classList.add('hidden');
+            isTutorial = true;
+            tutorialStep = 0;
+            inventory = { bombs: 0, traps: 0 };
+            gameTime = 0;
+            lives = maxLives;
+            isPaused = false;
+            loadTutorialLevel(tutorialStep);
+            gameState = 'playing';
+            gameLoop();
+        }
+
+        function loadTutorialLevel(step) {
+            const level = tutorialLevels[step];
+            const map = level.map;
+            
+            enemies = [];
+            collectibles = [];
+            pings = [];
+            bombs = [];
+            traps = [];
+            revealedWalls = [];
+            stamina = maxStamina;
+            pingCooldown = 0;
+            basePingCooldown = 60; // Tutorial'da daha hızlı ping
+            maxBombs = 3;
+            maxTraps = 3;
+            bombRadius = 80;
+            
+            for (let y = 0; y < map.length; y++) {
+                for (let x = 0; x < map[y].length; x++) {
+                    const tile = map[y][x];
+                    const posX = x * TILE_SIZE + TILE_SIZE / 2;
+                    const posY = y * TILE_SIZE + TILE_SIZE / 2;
+                    
+                    if (tile === 2) {
+                        player.x = posX;
+                        player.y = posY;
+                    } else if (tile === 3) {
+                        exit.x = posX;
+                        exit.y = posY;
+                    } else if (tile === 4) {
+                        enemies.push({
+                            x: posX,
+                            y: posY,
+                            size: 14,
+                            type: 'listener',
+                            state: 'idle',
+                            targetX: posX,
+                            targetY: posY,
+                            alertTimer: 0,
+                            stunned: 0
+                        });
+                    } else if (tile === 7) {
+                        enemies.push({
+                            x: posX,
+                            y: posY,
+                            size: 16,
+                            type: 'hunter',
+                            state: 'patrol',
+                            targetX: posX,
+                            targetY: posY,
+                            alertTimer: 0,
+                            stunned: 0,
+                            patrolTarget: null
+                        });
+                    } else if (tile === 5) {
+                        collectibles.push({ x: posX, y: posY, type: 'bomb' });
+                    } else if (tile === 6) {
+                        collectibles.push({ x: posX, y: posY, type: 'trap' });
+                    } else if (tile === 8) {
+                        collectibles.push({ x: posX, y: posY, type: 'heart' });
+                    }
+                }
+            }
+            
+            canvas.width = map[0].length * TILE_SIZE;
+            canvas.height = map.length * TILE_SIZE;
+            
+            // Mesajı göster
+            showMessage(level.message, 5000);
+        }
+
+        function nextTutorialLevel() {
+            tutorialStep++;
+            if (tutorialStep >= tutorialLevels.length) {
+                // Tutorial bitti - tebrik ekranı göster
+                isTutorial = false;
+                gameState = 'tutorial_complete';
+                document.getElementById('tutorialCompleteScreen').classList.remove('hidden');
+            } else {
+                loadTutorialLevel(tutorialStep);
+            }
+        }
+        
+        function startGameAfterTutorial() {
+            document.getElementById('tutorialCompleteScreen').classList.add('hidden');
+            currentLevel = 0;
+            inventory = { bombs: 0, traps: 0 };
+            gameTime = 0;
+            lives = maxLives;
+            loadLevel(currentLevel);
+            gameState = 'playing';
+            gameLoop();
+        }
+
+        function startGame() {
+            initAudio();
+            document.getElementById('startScreen').classList.add('hidden');
+            isTutorial = false;
+            currentLevel = 0;
+            inventory = { bombs: 0, traps: 0 };
+            gameTime = 0;
+            lives = maxLives;
+            loadLevel(currentLevel);
+            gameState = 'playing';
+            gameLoop();
+        }
+
+        function restartLevel() {
+            document.getElementById('deathScreen').classList.add('hidden');
+            document.getElementById('pauseScreen').classList.add('hidden');
+            loadLevel(currentLevel);
+            gameState = 'playing';
+            isPaused = false;
+            gameLoop();
+        }
+
+        function restartGame() {
+            document.getElementById('winScreen').classList.add('hidden');
+            document.getElementById('pauseScreen').classList.add('hidden');
+            document.getElementById('deathScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('tutorialCompleteScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            isTutorial = false;
+            tutorialPaused = false;
+            isPaused = false;
+            gameState = 'start';
+        }
+
+        function continueAfterDeath() {
+            document.getElementById('deathScreen').classList.add('hidden');
+            if (isTutorial) {
+                loadTutorialLevel(tutorialStep);
+            } else {
+                loadLevel(currentLevel);
+            }
+            gameState = 'playing';
+            isPaused = false;
+            gameLoop();
+        }
+
+        function playerDied() {
+            playSound('death');
+            
+            // Tutorial'da can kaybetme yok, direkt devam
+            if (isTutorial) {
+                showMessage("Tekrar dene!", 1500);
+                loadTutorialLevel(tutorialStep);
+                return;
+            }
+            
+            lives--;
+            if (lives <= 0) {
+                gameState = 'gameover';
+                document.getElementById('reachedLevel').textContent = currentLevel + 1;
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+            } else {
+                gameState = 'dead';
+                document.getElementById('remainingLives').textContent = lives;
+                document.getElementById('deathScreen').classList.remove('hidden');
+            }
+        }
+
+        function pauseGame() {
+            if (gameState === 'playing') {
+                isPaused = true;
+                document.getElementById('pauseScreen').classList.remove('hidden');
+            }
+        }
+
+        function resumeGame() {
+            isPaused = false;
+            document.getElementById('pauseScreen').classList.add('hidden');
+            gameLoop();
+        }
+
+        function formatTime(frames) {
+            const totalSeconds = Math.floor(frames / 60);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function nextLevel() {
+            playSound('levelup');
+            currentLevel++;
+            if (currentLevel >= levels.length) {
+                gameState = 'win';
+                document.getElementById('finalTime').textContent = formatTime(gameTime);
+                document.getElementById('winScreen').classList.remove('hidden');
+            } else {
+                loadLevel(currentLevel);
+                showMessage(`LEVEL ${currentLevel + 1}`, 2000);
+            }
+        }
+
+        function isWall(x, y) {
+            const map = isTutorial ? tutorialLevels[tutorialStep].map : levels[currentLevel].map;
+            const tileX = Math.floor(x / TILE_SIZE);
+            const tileY = Math.floor(y / TILE_SIZE);
+            
+            if (tileX < 0 || tileY < 0 || tileY >= map.length || tileX >= map[0].length) {
+                return true;
+            }
+            return map[tileY][tileX] === 1;
+        }
+
+        function moveEntity(entity, dx, dy) {
+            const newX = entity.x + dx;
+            const newY = entity.y + dy;
+            const size = entity.size;
+            
+            if (!isWall(newX - size/2, newY - size/2) &&
+                !isWall(newX + size/2, newY - size/2) &&
+                !isWall(newX - size/2, newY + size/2) &&
+                !isWall(newX + size/2, newY + size/2)) {
+                entity.x = newX;
+                entity.y = newY;
+                return true;
+            }
+            return false;
+        }
+
+        function createPing(x, y, isEnemy = false) {
+            pings.push({
+                x: x,
+                y: y,
+                radius: 0,
+                maxRadius: 200,
+                speed: 5,
+                opacity: 1,
+                isEnemy: isEnemy
+            });
+            
+            if (!isEnemy) {
+                playSound('ping');
+            }
+            
+            // Gizlenme modunda ping sesi daha kısa mesafede duyulur
+            const listenerRange = isSneaking ? 120 : 300;
+            const hunterRange = isSneaking ? 150 : 350;
+            
+            if (!isEnemy) {
+                enemies.forEach(enemy => {
+                    if (enemy.stunned <= 0) {
+                        const dist = Math.hypot(enemy.x - x, enemy.y - y);
+                        if (dist < listenerRange && enemy.state === 'idle') {
+                            if (enemy.type === 'listener') {
+                                enemy.state = 'alert';
+                                enemy.targetX = x;
+                                enemy.targetY = y;
+                                enemy.alertTimer = isSneaking ? 90 : 180; // Gizliyken daha kısa takip
+                            }
+                        }
+                        if (enemy.type === 'hunter' && dist < hunterRange && enemy.state === 'patrol') {
+                            enemy.state = 'alert';
+                            enemy.targetX = x;
+                            enemy.targetY = y;
+                            enemy.alertTimer = isSneaking ? 90 : 180;
+                        }
+                    }
+                });
+            }
+        }
+
+        function throwBomb() {
+            if (inventory.bombs > 0) {
+                const existingBomb = bombs.find(b => !b.exploding && Math.hypot(b.x - player.x, b.y - player.y) < 20);
+                if (existingBomb) return;
+                
+                inventory.bombs--;
+                bombs.push({
+                    x: player.x,
+                    y: player.y,
+                    timer: 90,
+                    radius: 0,
+                    exploding: false
+                });
+                playSound('pickup');
+                showMessage("💣 BOMBA BIRAKILDI!", 500);
+            } else {
+                showMessage("BOMBA YOK!", 500);
+            }
+        }
+
+        function placeTrap() {
+            if (inventory.traps > 0) {
+                const existingTrap = traps.find(t => !t.triggered && Math.hypot(t.x - player.x, t.y - player.y) < 20);
+                if (existingTrap) return;
+                
+                inventory.traps--;
+                traps.push({
+                    x: player.x,
+                    y: player.y,
+                    triggered: false,
+                    timer: 0
+                });
+                playSound('pickup');
+                showMessage("🕸️ AĞ BIRAKILDI!", 500);
+            } else {
+                showMessage("TUZAK YOK!", 500);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            
+            if (e.code === 'Escape') {
+                if (isPaused) {
+                    resumeGame();
+                } else if (gameState === 'playing') {
+                    pauseGame();
+                }
+            }
+            
+            if (e.code === 'KeyN') {
+                soundEnabled = !soundEnabled;
+                showMessage(soundEnabled ? "SES ACIK" : "SES KAPALI", 1000);
+            }
+            
+            if (gameState === 'playing' && !isPaused) {
+                if (e.code === 'Space' && pingCooldown <= 0) {
+                    createPing(player.x, player.y);
+                    pingCooldown = basePingCooldown;
+                }
+                if (e.code === 'KeyE') {
+                    throwBomb();
+                }
+                if (e.code === 'KeyQ') {
+                    placeTrap();
+                }
+            }
+            
+            e.preventDefault();
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+            if (isPaused) return;
+            
+            gameTime++;
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update() {
+            // Tutorial'da doğru haritayı kullan
+            let currentMap;
+            if (isTutorial) {
+                if (tutorialLevels[tutorialStep]) {
+                    currentMap = tutorialLevels[tutorialStep].map;
+                } else {
+                    currentMap = levels[0].map;
+                }
+            } else {
+                currentMap = levels[currentLevel].map;
+            }
+            
+            // Ping animasyonları
+            for (let i = pings.length - 1; i >= 0; i--) {
+                const ping = pings[i];
+                ping.radius += ping.speed;
+                ping.opacity = 1 - (ping.radius / ping.maxRadius);
+                
+                // Duvarları tespit et
+                for (let y = 0; y < currentMap.length; y++) {
+                    for (let x = 0; x < currentMap[y].length; x++) {
+                        if (currentMap[y][x] === 1) {
+                            const wallCenterX = x * TILE_SIZE + TILE_SIZE / 2;
+                            const wallCenterY = y * TILE_SIZE + TILE_SIZE / 2;
+                            const dist = Math.hypot(wallCenterX - ping.x, wallCenterY - ping.y);
+                            
+                            // Ping dalgası bu duvara değdi mi?
+                            if (dist <= ping.radius && dist >= ping.radius - ping.speed * 2) {
+                                const existing = revealedWalls.find(w => w.x === x && w.y === y);
+                                if (existing) {
+                                    existing.opacity = 1;
+                                    existing.timer = 180;
+                                } else {
+                                    revealedWalls.push({ x: x, y: y, opacity: 1, timer: 180 });
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (ping.radius >= ping.maxRadius) {
+                    pings.splice(i, 1);
+                }
+            }
+            
+            // Revealed duvarlar fade out
+            for (let i = revealedWalls.length - 1; i >= 0; i--) {
+                const wall = revealedWalls[i];
+                wall.timer--;
+                if (wall.timer < 60) {
+                    wall.opacity = wall.timer / 60;
+                }
+                if (wall.timer <= 0) {
+                    revealedWalls.splice(i, 1);
+                }
+            }
+            
+            const wantsToSneak = keys['KeyW'];
+            
+            if (wantsToSneak && stamina > 0) {
+                isSneaking = true;
+                stamina = Math.max(0, stamina - staminaDrain);
+            } else {
+                isSneaking = false;
+                stamina = Math.min(maxStamina, stamina + staminaRegen);
+            }
+            
+            const speed = isSneaking ? 1.5 : 3;
+            
+            if (keys['ArrowUp']) moveEntity(player, 0, -speed);
+            if (keys['ArrowDown']) moveEntity(player, 0, speed);
+            if (keys['ArrowLeft']) moveEntity(player, -speed, 0);
+            if (keys['ArrowRight']) moveEntity(player, speed, 0);
+            
+            if (pingCooldown > 0) pingCooldown--;
+            
+            if (messageTimer > 0) {
+                messageTimer -= 16;
+                if (messageTimer <= 0) {
+                    document.getElementById('message').style.opacity = 0;
+                }
+            }
+            
+            for (let i = bombs.length - 1; i >= 0; i--) {
+                const bomb = bombs[i];
+                
+                if (!bomb.exploding) {
+                    bomb.timer--;
+                    if (bomb.timer <= 0) {
+                        bomb.exploding = true;
+                        bomb.currentRadius = 0;
+                        bomb.maxRadius = bombRadius;
+                        playSound('bomb');
+                        createPing(bomb.x, bomb.y, true);
+                    }
+                } else {
+                    bomb.currentRadius += 15;
+                    
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const enemy = enemies[j];
+                        const dist = Math.hypot(enemy.x - bomb.x, enemy.y - bomb.y);
+                        
+                        if (dist <= bomb.currentRadius) {
+                            enemies.splice(j, 1);
+                            playSound('kill');
+                            showMessage("💀 CANAVAR YOK EDİLDİ!", 1000);
+                        }
+                    }
+                    
+                    if (bomb.currentRadius > bomb.maxRadius + 20) {
+                        bombs.splice(i, 1);
+                    }
+                }
+            }
+            
+            for (let i = traps.length - 1; i >= 0; i--) {
+                const trap = traps[i];
+                
+                if (trap.triggered) {
+                    trap.timer--;
+                    if (trap.timer <= 0) {
+                        traps.splice(i, 1);
+                    }
+                } else {
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const enemy = enemies[j];
+                        const dist = Math.hypot(enemy.x - trap.x, enemy.y - trap.y);
+                        
+                        if (dist < 25 && enemy.stunned <= 0) {
+                            trap.triggered = true;
+                            trap.timer = 120;
+                            
+                            enemy.stunned = 300;
+                            enemy.state = 'idle';
+                            playSound('trap');
+                            showMessage("🕸️ AĞA YAKALANDI! Canavar sersemledi!", 1000);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            enemies.forEach(enemy => {
+                if (enemy.stunned > 0) {
+                    enemy.stunned--;
+                    return;
+                }
+                
+                const distToPlayer = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+                
+                // Gizlenme modu: görüş mesafesi çok azalır, sadece çok yakınken fark ederler
+                const visionRange = isSneaking ? 15 : 50;
+                
+                const hasLOS = hasLineOfSight(enemy.x, enemy.y, player.x, player.y);
+                const canSeePlayer = distToPlayer < visionRange && hasLOS;
+                
+                if (canSeePlayer && enemy.state !== 'chase') {
+                    enemy.state = 'chase';
+                    enemy.targetX = player.x;
+                    enemy.targetY = player.y;
+                    enemy.alertTimer = 180;
+                }
+                
+                if (enemy.type === 'listener') {
+                    if (enemy.state === 'alert') {
+                        const dx = enemy.targetX - enemy.x;
+                        const dy = enemy.targetY - enemy.y;
+                        const dist = Math.hypot(dx, dy);
+                        
+                        if (dist > 10) {
+                            const speed = 2.5;
+                            const moveX = (dx / dist) * speed;
+                            const moveY = (dy / dist) * speed;
+                            
+                            if (!moveEntity(enemy, moveX, moveY)) {
+                                if (!moveEntity(enemy, moveX, 0)) {
+                                    moveEntity(enemy, 0, moveY);
+                                }
+                            }
+                        } else {
+                            enemy.state = 'search';
+                            enemy.searchTimer = 120;
+                            enemy.searchAngle = Math.random() * Math.PI * 2;
+                        }
+                        
+                        enemy.alertTimer--;
+                        if (enemy.alertTimer <= 0) {
+                            enemy.state = 'idle';
+                        }
+                    } else if (enemy.state === 'search') {
+                        enemy.searchTimer--;
+                        enemy.searchAngle += 0.08;
+                        
+                        const searchSpeed = 1.5;
+                        const moveX = Math.cos(enemy.searchAngle) * searchSpeed;
+                        const moveY = Math.sin(enemy.searchAngle) * searchSpeed;
+                        
+                        if (!moveEntity(enemy, moveX, moveY)) {
+                            enemy.searchAngle += Math.PI / 2;
+                        }
+                        
+                        if (enemy.searchTimer <= 0) {
+                            enemy.state = 'idle';
+                        }
+                    } else if (enemy.state === 'chase') {
+                        if (canSeePlayer) {
+                            enemy.targetX = player.x;
+                            enemy.targetY = player.y;
+                            enemy.alertTimer = 180;
+                        }
+                        
+                        const dx = enemy.targetX - enemy.x;
+                        const dy = enemy.targetY - enemy.y;
+                        const dist = Math.hypot(dx, dy);
+                        
+                        if (dist > 5) {
+                            const speed = 3.0;
+                            const moveX = (dx / dist) * speed;
+                            const moveY = (dy / dist) * speed;
+                            
+                            if (!moveEntity(enemy, moveX, moveY)) {
+                                if (!moveEntity(enemy, moveX, 0)) {
+                                    moveEntity(enemy, 0, moveY);
+                                }
+                            }
+                        }
+                        
+                        enemy.alertTimer--;
+                        if (enemy.alertTimer <= 0 || dist < 10) {
+                            enemy.state = 'idle';
+                        }
+                    }
+                }
+                
+                if (enemy.type === 'hunter') {
+                    if (enemy.state === 'alert') {
+                        const dx = enemy.targetX - enemy.x;
+                        const dy = enemy.targetY - enemy.y;
+                        const dist = Math.hypot(dx, dy);
+                        
+                        if (dist > 10) {
+                            const speed = 1.8;
+                            enemy.x += (dx / dist) * speed;
+                            enemy.y += (dy / dist) * speed;
+                        } else {
+                            enemy.state = 'search';
+                            enemy.searchTimer = 120;
+                            enemy.searchAngle = Math.random() * Math.PI * 2;
+                        }
+                        
+                        enemy.alertTimer--;
+                        if (enemy.alertTimer <= 0) {
+                            enemy.state = 'patrol';
+                        }
+                    } else if (enemy.state === 'search') {
+                        enemy.searchTimer--;
+                        enemy.searchAngle += 0.06;
+                        
+                        const searchSpeed = 1.5;
+                        enemy.x += Math.cos(enemy.searchAngle) * searchSpeed;
+                        enemy.y += Math.sin(enemy.searchAngle) * searchSpeed;
+                        
+                        if (enemy.searchTimer <= 0) {
+                            enemy.state = 'patrol';
+                        }
+                    } else if (enemy.state === 'chase') {
+                        if (canSeePlayer) {
+                            enemy.targetX = player.x;
+                            enemy.targetY = player.y;
+                            enemy.alertTimer = 180;
+                        }
+                        
+                        const dx = enemy.targetX - enemy.x;
+                        const dy = enemy.targetY - enemy.y;
+                        const dist = Math.hypot(dx, dy);
+                        
+                        if (dist > 5) {
+                            enemy.x += (dx / dist) * 2.2;
+                            enemy.y += (dy / dist) * 2.2;
+                        }
+                        
+                        enemy.alertTimer--;
+                        if (enemy.alertTimer <= 0 || dist < 10) {
+                            enemy.state = 'patrol';
+                        }
+                    } else {
+                        enemy.state = 'patrol';
+                        if (!enemy.patrolTarget || Math.hypot(enemy.x - enemy.patrolTarget.x, enemy.y - enemy.patrolTarget.y) < 20) {
+                            enemy.patrolTarget = {
+                                x: enemy.x + (Math.random() - 0.5) * 200,
+                                y: enemy.y + (Math.random() - 0.5) * 200
+                            };
+                        }
+                        const dx = enemy.patrolTarget.x - enemy.x;
+                        const dy = enemy.patrolTarget.y - enemy.y;
+                        const dist = Math.hypot(dx, dy);
+                        if (dist > 5) {
+                            enemy.x += (dx / dist) * 0.7;
+                            enemy.y += (dy / dist) * 0.7;
+                        }
+                    }
+                }
+                
+                if (distToPlayer < player.size + enemy.size - 5) {
+                    playerDied();
+                    return;
+                }
+            });
+            
+            collectibles.forEach((item, index) => {
+                const dist = Math.hypot(player.x - item.x, player.y - item.y);
+                if (dist < 25) {
+                    if (item.type === 'bomb') {
+                        if (inventory.bombs < maxBombs) {
+                            inventory.bombs++;
+                            collectibles.splice(index, 1);
+                            playSound('pickup');
+                            showMessage(`+1 BOMBA (${inventory.bombs}/${maxBombs})`, 1000);
+                        } else {
+                            showMessage(`CANTA DOLU! (${maxBombs}/${maxBombs})`, 1000);
+                        }
+                    } else if (item.type === 'trap') {
+                        if (inventory.traps < maxTraps) {
+                            inventory.traps++;
+                            collectibles.splice(index, 1);
+                            playSound('pickup');
+                            showMessage(`+1 AĞ (${inventory.traps}/${maxTraps})`, 1000);
+                        } else {
+                            showMessage(`CANTA DOLU! (${maxTraps}/${maxTraps})`, 1000);
+                        }
+                    } else if (item.type === 'heart') {
+                        lives++;
+                        collectibles.splice(index, 1);
+                        playSound('pickup');
+                        showMessage(`+1 CAN! (${lives} can)`, 1500);
+                    }
+                }
+            });
+            
+            const distToExit = Math.hypot(player.x - exit.x, player.y - exit.y);
+            if (distToExit < 25) {
+                if (isTutorial) {
+                    playSound('levelup');
+                    nextTutorialLevel();
+                } else {
+                    nextLevel();
+                }
+            }
+            
+            document.getElementById('livesCount').textContent = lives;
+            document.getElementById('livesCount').style.color = lives <= 1 ? '#f00' : '#0ff';
+            document.getElementById('levelNum').textContent = isTutorial ? `T${tutorialStep + 1}` : currentLevel + 1;
+            document.getElementById('gameTimer').textContent = formatTime(gameTime);
+            document.getElementById('pingReady').textContent = pingCooldown <= 0 ? 'HAZIR' : (pingCooldown / 60).toFixed(1) + 's';
+            document.getElementById('pingReady').style.color = pingCooldown <= 0 ? '#0f0' : '#f55';
+            document.getElementById('bombCount').textContent = `${inventory.bombs}/${maxBombs}`;
+            document.getElementById('trapCount').textContent = `${inventory.traps}/${maxTraps}`;
+            
+            const listenerCount = enemies.filter(e => e.type === 'listener').length;
+            const hunterCount = enemies.filter(e => e.type === 'hunter').length;
+            document.getElementById('listenerCount').textContent = listenerCount;
+            document.getElementById('hunterCount').textContent = hunterCount;
+            document.getElementById('listenerCount').style.color = listenerCount > 0 ? '#f55' : '#0f0';
+            document.getElementById('hunterCount').style.color = hunterCount > 0 ? '#f0f' : '#0f0';
+            
+            const staminaPercent = (stamina / maxStamina) * 100;
+            document.getElementById('staminaBar').style.width = staminaPercent + '%';
+            if (staminaPercent < 20) {
+                document.getElementById('staminaBar').style.background = '#f00';
+            } else if (staminaPercent < 50) {
+                document.getElementById('staminaBar').style.background = 'linear-gradient(90deg, #f80, #ff0)';
+            } else {
+                document.getElementById('staminaBar').style.background = 'linear-gradient(90deg, #0ff, #0f0)';
+            }
+        }
+
+        function render() {
+            ctx.fillStyle = '#000a0f';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Revealed duvarlar
+            revealedWalls.forEach(wall => {
+                ctx.fillStyle = `rgba(0, 255, 255, ${wall.opacity * 0.6})`;
+                ctx.fillRect(wall.x * TILE_SIZE, wall.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                
+                ctx.strokeStyle = `rgba(0, 255, 255, ${wall.opacity})`;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(wall.x * TILE_SIZE, wall.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            });
+            
+            // Ping dalgaları
+            pings.forEach(ping => {
+                ctx.beginPath();
+                ctx.arc(ping.x, ping.y, ping.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = ping.isEnemy ? 
+                    `rgba(255, 100, 50, ${ping.opacity})` : 
+                    `rgba(0, 255, 255, ${ping.opacity})`;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                if (!ping.isEnemy && ping.opacity > 0.3) {
+                    ctx.beginPath();
+                    ctx.arc(ping.x, ping.y, ping.radius - 5, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(100, 255, 255, ${ping.opacity * 0.3})`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            });
+            
+            // Tuzaklar
+            traps.forEach(trap => {
+                let visible = true;
+                let opacity = 0.7;
+                
+                pings.forEach(ping => {
+                    const dist = Math.hypot(trap.x - ping.x, trap.y - ping.y);
+                    if (dist < ping.radius + 20 && dist > ping.radius - 40) {
+                        opacity = Math.max(opacity, ping.opacity);
+                    }
+                });
+                
+                const distToPlayer = Math.hypot(trap.x - player.x, trap.y - player.y);
+                if (distToPlayer < 50) {
+                    opacity = Math.max(opacity, 0.9);
+                }
+                
+                if (trap.triggered) {
+                    opacity = trap.timer / 120;
+                }
+                
+                if (visible && opacity > 0.1) {
+                    if (!trap.triggered) {
+                        ctx.fillStyle = `rgba(255, 255, 0, ${opacity * 0.7})`;
+                        ctx.beginPath();
+                        ctx.arc(trap.x, trap.y, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        ctx.strokeStyle = `rgba(180, 150, 100, ${opacity})`;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(trap.x, trap.y, 14, 0, Math.PI * 2);
+                        ctx.stroke();
+                        
+                        // Düz ağ (file) çizimi (PARLAK)
+                        ctx.globalAlpha = opacity;
+                        ctx.strokeStyle = `rgba(220, 220, 220, 1)`;
+                        ctx.lineWidth = 2;
+                        
+                        const netW = 20, netH = 14;
+                        const cols = 5, rows = 4;
+                        const cellW = netW / cols, cellH = netH / rows;
+                        const startX = trap.x - netW/2, startY = trap.y - netH/2;
+                        
+                        // Yatay çizgiler (hafif kavisli)
+                        for (let r = 0; r <= rows; r++) {
+                            ctx.beginPath();
+                            const y = startY + r * cellH;
+                            const curve = (r === 0 || r === rows) ? 0 : Math.sin(r / rows * Math.PI) * 2;
+                            ctx.moveTo(startX - 2, y);
+                            ctx.quadraticCurveTo(trap.x, y + curve, startX + netW + 2, y);
+                            ctx.stroke();
+                        }
+                        
+                        // Dikey çizgiler (hafif kavisli)
+                        for (let c = 0; c <= cols; c++) {
+                            ctx.beginPath();
+                            const x = startX + c * cellW;
+                            const curve = (c === 0 || c === cols) ? 0 : Math.sin(c / cols * Math.PI) * 2;
+                            ctx.moveTo(x, startY - 2);
+                            ctx.quadraticCurveTo(x + curve, trap.y, x, startY + netH + 2);
+                            ctx.stroke();
+                        }
+                        
+                        // Köşe halkaları (kırmızı)
+                        ctx.fillStyle = '#dc3545';
+                        ctx.strokeStyle = '#a02030';
+                        ctx.lineWidth = 1;
+                        const corners = [
+                            {x: startX - 2, y: startY - 2},
+                            {x: startX + netW + 2, y: startY - 2},
+                            {x: startX - 2, y: startY + netH + 2},
+                            {x: startX + netW + 2, y: startY + netH + 2}
+                        ];
+                        corners.forEach(c => {
+                            ctx.beginPath();
+                            ctx.arc(c.x, c.y, 2.5, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+                        });
+                        ctx.globalAlpha = 1;
+                    } else {
+                        ctx.strokeStyle = `rgba(255, 255, 0, ${opacity})`;
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(trap.x, trap.y, 30, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+            });
+            
+            // Bombalar - BÜYÜK EMOJİ
+            bombs.forEach(bomb => {
+                let visible = true;
+                let opacity = 0.8;
+                
+                if (bomb.exploding) {
+                    opacity = 1;
+                } else {
+                    pings.forEach(ping => {
+                        const dist = Math.hypot(bomb.x - ping.x, bomb.y - ping.y);
+                        if (dist < ping.radius + 20 && dist > ping.radius - 40) {
+                            opacity = Math.max(opacity, ping.opacity);
+                        }
+                    });
+                    
+                    const distToPlayer = Math.hypot(bomb.x - player.x, bomb.y - player.y);
+                    if (distToPlayer < 60) {
+                        opacity = Math.max(opacity, 0.9);
+                    }
+                }
+                
+                if (visible && opacity > 0.1) {
+                    if (!bomb.exploding) {
+                        // Yanıp sönen arka plan
+                        const flash = Math.sin(bomb.timer * 0.3) > 0;
+                        ctx.fillStyle = flash ? `rgba(255, 50, 0, ${opacity * 0.6})` : `rgba(200, 0, 0, ${opacity * 0.4})`;
+                        ctx.beginPath();
+                        ctx.arc(bomb.x, bomb.y, 18, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Timer göstergesi (dış halka)
+                        ctx.strokeStyle = `rgba(255, 200, 0, ${opacity})`;
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(bomb.x, bomb.y, 20, -Math.PI/2, -Math.PI/2 + Math.PI * 2 * (bomb.timer / 90));
+                        ctx.stroke();
+                        
+                        // BÜYÜK BOMBA EMOJİ
+                        ctx.globalAlpha = opacity;
+                        ctx.font = '24px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('💣', bomb.x, bomb.y);
+                        ctx.globalAlpha = 1;
+                    } else {
+                        // Patlama efekti
+                        ctx.beginPath();
+                        ctx.arc(bomb.x, bomb.y, bomb.currentRadius, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255, 100, 0, ${(1 - bomb.currentRadius / bomb.maxRadius) * 0.8})`;
+                        ctx.fill();
+                        ctx.strokeStyle = `rgba(255, 200, 0, ${1 - bomb.currentRadius / bomb.maxRadius})`;
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                        
+                        // Patlama emoji
+                        if (bomb.currentRadius < bomb.maxRadius * 0.5) {
+                            ctx.font = '32px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('💥', bomb.x, bomb.y);
+                        }
+                    }
+                }
+            });
+            
+            // Collectibles
+            collectibles.forEach(item => {
+                let visible = false;
+                let opacity = 0;
+                
+                pings.forEach(ping => {
+                    const dist = Math.hypot(item.x - ping.x, item.y - ping.y);
+                    if (dist < ping.radius + 20 && dist > ping.radius - 40) {
+                        visible = true;
+                        opacity = Math.max(opacity, ping.opacity);
+                    }
+                });
+                
+                revealedWalls.forEach(wall => {
+                    const wallCenterX = wall.x * TILE_SIZE + TILE_SIZE / 2;
+                    const wallCenterY = wall.y * TILE_SIZE + TILE_SIZE / 2;
+                    const dist = Math.hypot(item.x - wallCenterX, item.y - wallCenterY);
+                    if (dist < TILE_SIZE * 2) {
+                        visible = true;
+                        opacity = Math.max(opacity, wall.opacity * 0.8);
+                    }
+                });
+                
+                const distToPlayer = Math.hypot(item.x - player.x, item.y - player.y);
+                if (distToPlayer < 40) {
+                    visible = true;
+                    opacity = Math.max(opacity, 0.8);
+                }
+                
+                if (visible && opacity > 0.1) {
+                    const pulse = Math.sin(Date.now() * 0.005) * 0.2 + 0.8;
+                    const finalOpacity = opacity * pulse;
+                    
+                    // Arka plan glow (PARLAK)
+                    if (item.type === 'bomb') {
+                        ctx.fillStyle = `rgba(255, 120, 0, ${finalOpacity * 0.7})`;
+                    } else if (item.type === 'heart') {
+                        ctx.fillStyle = `rgba(255, 50, 100, ${finalOpacity * 0.75})`;
+                    } else {
+                        ctx.fillStyle = `rgba(200, 150, 80, ${finalOpacity * 0.7})`;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y, 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.globalAlpha = finalOpacity;
+                    ctx.font = '26px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    if (item.type === 'bomb') {
+                        // Bomba - siyah kontur ile belirgin
+                        ctx.strokeStyle = '#000';
+                        ctx.lineWidth = 3;
+                        ctx.strokeText('💣', item.x, item.y);
+                        ctx.fillText('💣', item.x, item.y);
+                    } else if (item.type === 'heart') {
+                        ctx.strokeStyle = '#000';
+                        ctx.lineWidth = 3;
+                        ctx.strokeText('❤️', item.x, item.y);
+                        ctx.fillText('❤️', item.x, item.y);
+                    } else {
+                        // Düz ağ (file) çizimi (PARLAK)
+                        ctx.strokeStyle = `rgba(220, 220, 220, 1)`;
+                        ctx.lineWidth = 2;
+                        
+                        const netW = 22, netH = 16;
+                        const cols = 5, rows = 4;
+                        const cellW = netW / cols, cellH = netH / rows;
+                        const startX = item.x - netW/2, startY = item.y - netH/2;
+                        
+                        // Yatay çizgiler (hafif kavisli)
+                        for (let r = 0; r <= rows; r++) {
+                            ctx.beginPath();
+                            const y = startY + r * cellH;
+                            const curve = (r === 0 || r === rows) ? 0 : Math.sin(r / rows * Math.PI) * 2;
+                            ctx.moveTo(startX - 3, y);
+                            ctx.quadraticCurveTo(item.x, y + curve, startX + netW + 3, y);
+                            ctx.stroke();
+                        }
+                        
+                        // Dikey çizgiler (hafif kavisli)
+                        for (let c = 0; c <= cols; c++) {
+                            ctx.beginPath();
+                            const x = startX + c * cellW;
+                            const curve = (c === 0 || c === cols) ? 0 : Math.sin(c / cols * Math.PI) * 2;
+                            ctx.moveTo(x, startY - 2);
+                            ctx.quadraticCurveTo(x + curve, item.y, x, startY + netH + 2);
+                            ctx.stroke();
+                        }
+                        
+                        // Köşe halkaları (kırmızı)
+                        ctx.fillStyle = '#dc3545';
+                        ctx.strokeStyle = '#a02030';
+                        ctx.lineWidth = 1;
+                        const corners = [
+                            {x: startX - 3, y: startY - 2},
+                            {x: startX + netW + 3, y: startY - 2},
+                            {x: startX - 3, y: startY + netH + 2},
+                            {x: startX + netW + 3, y: startY + netH + 2}
+                        ];
+                        corners.forEach(c => {
+                            ctx.beginPath();
+                            ctx.arc(c.x, c.y, 3, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+                        });
+                    }
+                    ctx.globalAlpha = 1;
+                }
+            });
+            
+            // Düşmanlar - EMOJİ İLE
+            enemies.forEach(enemy => {
+                let visible = false;
+                let opacity = 0;
+                
+                pings.forEach(ping => {
+                    const dist = Math.hypot(enemy.x - ping.x, enemy.y - ping.y);
+                    if (dist < ping.radius) {
+                        visible = true;
+                        opacity = Math.max(opacity, 0.85);
+                    }
+                });
+                
+                revealedWalls.forEach(wall => {
+                    const wallX = wall.x * TILE_SIZE + TILE_SIZE / 2;
+                    const wallY = wall.y * TILE_SIZE + TILE_SIZE / 2;
+                    const dist = Math.hypot(enemy.x - wallX, enemy.y - wallY);
+                    if (dist < TILE_SIZE * 2 && wall.opacity > 0.3) {
+                        visible = true;
+                        opacity = Math.max(opacity, wall.opacity * 0.8);
+                    }
+                });
+                
+                if (enemy.stunned > 0) {
+                    visible = true;
+                    opacity = Math.max(opacity, 0.7);
+                }
+                
+                if (visible && opacity > 0.05) {
+                    // Glow arka plan - GEÇİŞLİ VE BELİRGİN
+                    if (enemy.stunned > 0) {
+                        // Donmuş - gri
+                        ctx.fillStyle = `rgba(128, 128, 128, ${opacity * 0.8})`;
+                        ctx.beginPath();
+                        ctx.arc(enemy.x, enemy.y, enemy.size + 12, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (enemy.type === 'hunter') {
+                        // Avcı - kademeli mor halkalar
+                        ctx.fillStyle = `rgba(180, 0, 255, ${opacity * 0.6})`;
+                        ctx.beginPath();
+                        ctx.arc(enemy.x, enemy.y, enemy.size + 18, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = `rgba(220, 80, 255, ${opacity * 0.4})`;
+                        ctx.beginPath();
+                        ctx.arc(enemy.x, enemy.y, enemy.size + 12, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = `rgba(255, 150, 255, ${opacity * 0.25})`;
+                        ctx.beginPath();
+                        ctx.arc(enemy.x, enemy.y, enemy.size + 6, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        // Dinleyici (Robot) - kademeli AÇIK MOR/LİLA halkalar
+                        ctx.fillStyle = `rgba(180, 130, 255, ${opacity * 0.5})`;
+                        ctx.beginPath();
+                        ctx.arc(enemy.x, enemy.y, enemy.size + 20, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = `rgba(200, 160, 255, ${opacity * 0.35})`;
+                        ctx.beginPath();
+                        ctx.arc(enemy.x, enemy.y, enemy.size + 14, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = `rgba(220, 190, 255, ${opacity * 0.2})`;
+                        ctx.beginPath();
+                        ctx.arc(enemy.x, enemy.y, enemy.size + 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    // State göstergesi kaldırıldı - emojiler yeterli
+                    
+                    // CANAVAR EMOJİLERİ - donmuş olanlar gri filtre ile
+                    ctx.globalAlpha = 1; // Emoji tam görünür
+                    ctx.font = '32px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    let emoji;
+                    if (enemy.type === 'hunter') {
+                        emoji = '👾'; // Uzaylı canavar - duvardan geçer
+                    } else {
+                        emoji = '🤖'; // Robot - ses dinler
+                    }
+                    
+                    // Donmuş canavar için gri efekt
+                    if (enemy.stunned > 0) {
+                        ctx.filter = 'grayscale(100%)';
+                        ctx.fillText(emoji, enemy.x, enemy.y);
+                        ctx.filter = 'none';
+                        
+                        // Buz kristali efekti
+                        ctx.strokeStyle = `rgba(150, 200, 255, ${opacity * 0.8})`;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(enemy.x, enemy.y, enemy.size + 4, 0, Math.PI * 2);
+                        ctx.stroke();
+                    } else {
+                        ctx.fillText(emoji, enemy.x, enemy.y);
+                    }
+                    ctx.globalAlpha = 1;
+                }
+            });
+            
+            // Çıkış - Portal
+            const exitPulse = Math.sin(Date.now() * 0.003) * 0.2 + 0.6;
+            const rotation = Date.now() * 0.001;
+            
+            ctx.save();
+            ctx.translate(exit.x, exit.y);
+            ctx.rotate(rotation);
+            
+            ctx.strokeStyle = `rgba(0, 255, 150, ${exitPulse})`;
+            ctx.lineWidth = 3;
+            ctx.setLineDash([12, 8]);
+            ctx.beginPath();
+            ctx.arc(0, 0, exit.size + 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.restore();
+            
+            ctx.save();
+            ctx.translate(exit.x, exit.y);
+            ctx.rotate(-rotation * 2);
+            
+            ctx.strokeStyle = `rgba(100, 255, 200, ${exitPulse * 0.8})`;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 6]);
+            ctx.beginPath();
+            ctx.arc(0, 0, exit.size - 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.restore();
+            
+            const coreGradient = ctx.createRadialGradient(exit.x, exit.y, 0, exit.x, exit.y, exit.size);
+            coreGradient.addColorStop(0, `rgba(220, 255, 240, ${exitPulse})`);
+            coreGradient.addColorStop(0.6, `rgba(0, 255, 150, ${exitPulse * 0.4})`);
+            coreGradient.addColorStop(1, 'rgba(0, 255, 150, 0)');
+            ctx.fillStyle = coreGradient;
+            ctx.beginPath();
+            ctx.arc(exit.x, exit.y, exit.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.shadowColor = '#0f8';
+            ctx.shadowBlur = 20;
+            ctx.strokeStyle = `rgba(0, 255, 150, ${exitPulse * 0.5})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(exit.x, exit.y, exit.size, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            
+            // Oyuncu
+            if (isSneaking) {
+                // Gizlenme modunda yarı şeffaf ve titreşimli
+                ctx.globalAlpha = 0.4 + Math.sin(Date.now() * 0.01) * 0.1;
+            }
+            
+            const gradient = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, 30);
+            gradient.addColorStop(0, isSneaking ? 'rgba(100, 150, 200, 0.3)' : 'rgba(255, 255, 255, 0.5)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = isSneaking ? '#3366aa' : '#ffffff';
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = isSneaking ? 'rgba(80, 140, 200, 0.5)' : 'rgba(0, 255, 255, 0.9)';
+            ctx.lineWidth = isSneaking ? 2 : 3;
+            ctx.stroke();
+            
+            ctx.globalAlpha = 1;
+            
+            if (isSneaking) {
+                // Gizlenme göstergesi - kesikli dış halka
+                ctx.strokeStyle = 'rgba(100, 180, 220, 0.3)';
+                ctx.setLineDash([3, 6]);
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.size + 8, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+    </script>
+</body>
+</html>
