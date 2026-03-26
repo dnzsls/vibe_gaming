@@ -2232,33 +2232,69 @@
                     
                     // State göstergesi kaldırıldı - emojiler yeterli
                     
-                    // CANAVAR EMOJİLERİ - HER ZAMAN NET GÖRÜNSÜN
-                    ctx.globalAlpha = Math.max(opacity, 0.85); // Minimum 0.85 opacity
-                    ctx.font = '32px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
+                    // CANAVAR ÇİZİMLERİ - HER YERDE AYNI GÖRÜNSÜN
+                    ctx.globalAlpha = Math.max(opacity, 0.9);
                     
-                    let emoji;
-                    if (enemy.type === 'hunter') {
-                        emoji = '👾'; // Uzaylı canavar - duvardan geçer
-                    } else {
-                        emoji = '🤖'; // Robot - ses dinler
-                    }
-                    
-                    // Donmuş canavar için gri efekt
                     if (enemy.stunned > 0) {
                         ctx.filter = 'grayscale(100%)';
-                        ctx.fillText(emoji, enemy.x, enemy.y);
+                    }
+                    
+                    if (enemy.type === 'hunter') {
+                        // Avcı - Uzaylı çizimi (👾 benzeri)
+                        ctx.fillStyle = '#a855f7';
+                        // Kafa
+                        ctx.fillRect(enemy.x - 10, enemy.y - 12, 20, 16);
+                        // Gözler
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(enemy.x - 7, enemy.y - 8, 5, 5);
+                        ctx.fillRect(enemy.x + 2, enemy.y - 8, 5, 5);
+                        // Göz bebekleri
+                        ctx.fillStyle = '#000';
+                        ctx.fillRect(enemy.x - 5, enemy.y - 6, 2, 2);
+                        ctx.fillRect(enemy.x + 4, enemy.y - 6, 2, 2);
+                        // Bacaklar
+                        ctx.fillStyle = '#a855f7';
+                        ctx.fillRect(enemy.x - 10, enemy.y + 4, 4, 8);
+                        ctx.fillRect(enemy.x - 4, enemy.y + 4, 4, 6);
+                        ctx.fillRect(enemy.x + 0, enemy.y + 4, 4, 6);
+                        ctx.fillRect(enemy.x + 6, enemy.y + 4, 4, 8);
+                    } else {
+                        // Robot çizimi (🤖 benzeri)
+                        ctx.fillStyle = '#6b7280';
+                        // Kafa
+                        ctx.beginPath();
+                        ctx.roundRect(enemy.x - 11, enemy.y - 13, 22, 18, 4);
+                        ctx.fill();
+                        // Anten
+                        ctx.fillStyle = '#9ca3af';
+                        ctx.fillRect(enemy.x - 1, enemy.y - 18, 2, 6);
+                        ctx.beginPath();
+                        ctx.arc(enemy.x, enemy.y - 18, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Gözler
+                        ctx.fillStyle = '#22d3ee';
+                        ctx.beginPath();
+                        ctx.arc(enemy.x - 5, enemy.y - 5, 4, 0, Math.PI * 2);
+                        ctx.arc(enemy.x + 5, enemy.y - 5, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Ağız
+                        ctx.fillStyle = '#374151';
+                        ctx.fillRect(enemy.x - 6, enemy.y + 2, 12, 3);
+                        // Ağız çizgileri
+                        ctx.fillStyle = '#9ca3af';
+                        ctx.fillRect(enemy.x - 4, enemy.y + 2, 1, 3);
+                        ctx.fillRect(enemy.x, enemy.y + 2, 1, 3);
+                        ctx.fillRect(enemy.x + 4, enemy.y + 2, 1, 3);
+                    }
+                    
+                    if (enemy.stunned > 0) {
                         ctx.filter = 'none';
-                        
                         // Buz kristali efekti
                         ctx.strokeStyle = `rgba(150, 200, 255, ${opacity * 0.8})`;
                         ctx.lineWidth = 2;
                         ctx.beginPath();
                         ctx.arc(enemy.x, enemy.y, enemy.size + 4, 0, Math.PI * 2);
                         ctx.stroke();
-                    } else {
-                        ctx.fillText(emoji, enemy.x, enemy.y);
                     }
                     ctx.globalAlpha = 1;
                 }
