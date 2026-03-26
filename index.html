@@ -291,7 +291,7 @@
                 E: 💣 Ses bombası at<br>
                 Q: <canvas id="netIconStart" width="24" height="20" style="vertical-align: middle; margin: 0 2px;"></canvas> Ağ bırak<br>
                 W: Gizlenme (görünmez ol)<br><br>
-                <span style="color: #c0b0ff;">🤖 Dinleyici</span> - Sesi takip eder<br>
+                <span style="color: #c0b0ff;">🤖 Robot</span> - Sesi takip eder<br>
                 <span style="color: #f0f;">👾 Avcı</span> - Duvardan geçer
             </div>
             <div style="display: flex; gap: 20px; margin-top: 20px;">
@@ -760,7 +760,7 @@
                     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
                 ],
-                message: "2 🦇 Dinleyici! 💣💣💣 Bol bomba var!"
+                message: "2 🤖 Robot! 💣💣💣 Bol bomba var!"
             },
             // Level 4
             {
@@ -798,7 +798,7 @@
                     [1,0,0,0,6,0,0,0,0,0,0,7,0,0,0,0,0,6,0,0,0,3,1],
                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
                 ],
-                message: "Labirent büyüdü! 2 🦇 + 1 👾"
+                message: "Labirent büyüdü! 2 🤖 + 1 👾"
             },
             // Level 6
             {
@@ -817,7 +817,7 @@
                     [1,6,0,0,0,0,0,6,0,0,0,0,0,0,0,3,1],
                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
                 ],
-                message: "Dar koridorlar! 3 🦇 Dinleyici"
+                message: "Dar koridorlar! 3 🤖 Robot"
             },
             // Level 7
             {
@@ -855,7 +855,7 @@
                     [1,0,0,5,0,0,0,0,0,4,0,0,0,0,0,5,0,0,0,3,1],
                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
                 ],
-                message: "3 🦇 + 3 👾! Dikkatli ol!"
+                message: "3 🤖 + 3 👾! Dikkatli ol!"
             },
             // Level 9
             {
@@ -876,7 +876,7 @@
                     [1,0,0,0,1,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,3,1],
                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
                 ],
-                message: "4 🦇 + 3 👾! ❤️ Can var!"
+                message: "4 🤖 + 3 👾! ❤️ Can var!"
             },
             // Level 10
             {
@@ -897,7 +897,7 @@
                     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
                 ],
-                message: "Spiral labirent! 2 🦇 + 2 👾"
+                message: "Spiral labirent! 2 🤖 + 2 👾"
             },
             // Level 11
             {
@@ -916,7 +916,7 @@
                     [1,0,0,0,0,6,0,0,0,4,0,0,0,0,0,0,6,0,0,3,1],
                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
                 ],
-                message: "Çapraz geçitler! 3 🦇 + 3 👾"
+                message: "Çapraz geçitler! 3 🤖 + 3 👾"
             },
             // Level 12
             {
@@ -976,7 +976,7 @@
                     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
                 ],
-                message: "4 🦇 + 5 👾! ❤️ Son can!"
+                message: "4 🤖 + 5 👾! ❤️ Son can!"
             },
             // Level 15 - ULTIMATE FINAL
             {
@@ -999,7 +999,7 @@
                     [1,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,7,0,0,0,0,0,0,3,1],
                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
                 ],
-                message: "🏆 ULTIMATE FİNAL! 6 🦇 + 6 👾! SON BOSS!"
+                message: "🏆 ULTIMATE FİNAL! 6 🤖 + 6 👾! SON BOSS!"
             }
         ];
 
@@ -2215,7 +2215,7 @@
                         ctx.arc(enemy.x, enemy.y, enemy.size + 6, 0, Math.PI * 2);
                         ctx.fill();
                     } else {
-                        // Dinleyici (Robot) - kademeli AÇIK MOR/LİLA halkalar
+                        // Robot (Robot) - kademeli AÇIK MOR/LİLA halkalar
                         ctx.fillStyle = `rgba(180, 130, 255, ${opacity * 0.5})`;
                         ctx.beginPath();
                         ctx.arc(enemy.x, enemy.y, enemy.size + 20, 0, Math.PI * 2);
