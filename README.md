@@ -1,7 +1,9 @@
 🎮 Echo Scanner
 Karanlıkta sesle yolunu bul! Ses dalgaları göndererek labirenti keşfet ve düşmanlardan kaçarak çıkışa ulaş.
 🎯 Oyna
+👉 https://echo-scanner-bd.netlify.app
 👉  https://dnzsls.github.io/vibe_gaming/
+
 
 🕹️ Kontroller
 Tuş    Aksiyon 
